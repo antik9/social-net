@@ -1,0 +1,16 @@
+doctype 5
+html
+  body
+    form#authentication[method="post"]
+      table
+        tr
+          th Email:
+          td
+            input#email[name="email"]
+        tr
+          th Password:
+          td
+            input#password[name="password"][type="password"]
+        tr
+          td[colspan="2"][style="text-align:center"]
+            button[type="submit"] Login

@@ -1,0 +1,40 @@
+doctype 5
+html
+  body
+    form#registration[method="post"]
+      table
+        tr
+          th First name:
+          td
+            input#first_name[name="first_name"]
+        tr
+          th Last name:
+          td
+            input#last_name[name="last_name"]
+        tr
+          th Age:
+          td
+            input#age[name="age"]
+        tr
+          th Email:
+          td
+            input#email[name="email"]
+        tr
+          th Password:
+          td
+            input#password[name="password"][type="password"]
+        tr
+          th Repeat password:
+          td
+            input#password2[name="password2"][type="password"]
+        tr
+          th City:
+          td
+            input#city[name="city"]
+        tr
+          th Interests(separated by comma):
+          td
+            input#interests[name="interests"][placeholder="basketball,music,cinema"]
+        tr
+          td[colspan="2"][style="text-align:center"]
+            button[type="submit"] Signup

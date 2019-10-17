@@ -1,0 +1,10 @@
+database:
+    name: social
+    username: social
+    host: localhost
+    port: 3306
+    password: social
+
+server:
+    host: 0.0.0.0
+    port: 8080

@@ -1,0 +1,21 @@
+doctype 5
+html
+  body
+    table
+      tr
+        th First name:
+        td #{FirstName}
+      tr
+        th Last name:
+        td #{LastName}
+      tr
+        th Age:
+        td #{Age}
+      tr
+        th City:
+        td #{City.Name}
+      tr
+        th Interests:
+        td
+          each $interest in Interests
+            p #{$interest.Name}
