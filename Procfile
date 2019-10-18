@@ -1,1 +1,2 @@
-web: server
+migrate: ./bin/migrate
+web: ./bin/server
