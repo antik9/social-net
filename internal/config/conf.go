@@ -56,6 +56,5 @@ func parseDatabaseConfig(database string) {
 		Conf.Database.Password = parts[2]
 		Conf.Database.Host = parts[3]
 		Conf.Database.Name = parts[4]
-		Conf.Database.Extra = parts[5]
 	}
 }
