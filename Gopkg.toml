@@ -1,0 +1,4 @@
+[metadata.heroku]
+  root-package = "github.com/antik9/social-net"
+  go-version = "1.12"
+  install = [ "./cmd/..." ]

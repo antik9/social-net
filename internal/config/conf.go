@@ -3,6 +3,8 @@ package config
 import (
 	"io/ioutil"
 	"log"
+	"os"
+	"regexp"
 
 	"gopkg.in/yaml.v3"
 )
@@ -15,6 +17,7 @@ type Config struct {
 		Host     string `yaml:"host"`
 		Port     string `yaml:"port"`
 		Password string `yaml:"password"`
+		Extra    string `yaml:"extra"`
 	} `yaml:"database"`
 
 	Server struct {
@@ -36,5 +39,23 @@ func init() {
 	err = yaml.Unmarshal(yamlFile, &Conf)
 	if err != nil {
 		log.Fatal(err)
+	}
+	if port := os.Getenv("PORT"); port != "" {
+		Conf.Server.Port = port
+	}
+	if database := os.Getenv("CLEARDB_DATABASE_URL"); database != "" {
+		parseDatabaseConfig(database)
+	}
+}
+
+func parseDatabaseConfig(database string) {
+	r := regexp.MustCompile(`mysql://(\w+):(\w+)@([\w-.]+)/([\w_]+)\?(.*)`)
+	parts := r.FindStringSubmatch(database)
+	if len(parts) > 0 {
+		Conf.Database.Username = parts[1]
+		Conf.Database.Password = parts[2]
+		Conf.Database.Host = parts[3]
+		Conf.Database.Name = parts[4]
+		Conf.Database.Extra = parts[5]
 	}
 }

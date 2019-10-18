@@ -16,12 +16,13 @@ var (
 
 func init() {
 	connectionParams := fmt.Sprintf(
-		"%s:%s@(%s:%s)/%s?charset=utf8&collation=utf8_general_ci",
+		"%s:%s@(%s:%s)/%s?%s",
 		config.Conf.Database.Username,
 		config.Conf.Database.Password,
 		config.Conf.Database.Host,
 		config.Conf.Database.Port,
 		config.Conf.Database.Name,
+		config.Conf.Database.Extra,
 	)
 	Db, err = sqlx.Connect("mysql", connectionParams)
 	projecterrors.FailOnErr(err)
