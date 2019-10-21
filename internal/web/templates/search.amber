@@ -1,0 +1,12 @@
+doctype 5
+html
+  body
+    form#search[method="get"]
+      input#search-q[name="q"]
+    table
+      each $user in Users
+        tr
+          td #{$user.FirstName}
+          td #{$user.LastName}
+          td
+            a[href="/user/" + $user.Id] link

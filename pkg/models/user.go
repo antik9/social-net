@@ -64,6 +64,36 @@ func getUserByEmail(email string, withForeignKeys bool) *User {
 	return &user
 }
 
+func GetUsersLimitBy(limit int) []User {
+	var users []User
+	db.Db.Select(
+		&users,
+		"SELECT id, first_name, last_name FROM user LIMIT ?",
+		limit,
+	)
+	return users
+}
+
+func GetUsersByNamePrefix(prefix string, limit int) []User {
+	var users []User
+	prefix += "%"
+	result := db.Db.Select(
+		&users,
+		`SELECT * FROM (
+			SELECT id, first_name, last_name FROM user WHERE first_name LIKE ?
+			UNION ALL
+			SELECT id, first_name, last_name FROM user WHERE last_name LIKE ?
+				AND NOT first_name LIKE ?
+		) utmp
+		ORDER BY id LIMIT ?`,
+		prefix, prefix, prefix, limit,
+	)
+	if result != nil {
+		panic(result)
+	}
+	return users
+}
+
 func NewSession(email, password string) *Session {
 	if user := getUserByEmail(email, false); user != nil {
 		err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))

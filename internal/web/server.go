@@ -16,6 +16,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type ListOfUsers struct {
+	Users []models.User
+}
+
 func renderTemplate(path string, data interface{}, w http.ResponseWriter) error {
 	compiler := amber.New()
 	err := compiler.ParseFile(path)
@@ -32,9 +36,9 @@ func renderTemplate(path string, data interface{}, w http.ResponseWriter) error 
 
 func authenticateUser(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case "GET":
+	case http.MethodGet:
 		renderTemplate("internal/web/templates/login.amber", nil, w)
-	case "POST":
+	case http.MethodPost:
 		if err := r.ParseForm(); err != nil {
 			fmt.Fprintf(w, "ParseForm() err: %v", err)
 			return
@@ -54,9 +58,9 @@ func authenticateUser(w http.ResponseWriter, r *http.Request) {
 
 func registerUser(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case "GET":
+	case http.MethodGet:
 		renderTemplate("internal/web/templates/registration.amber", nil, w)
-	case "POST":
+	case http.MethodPost:
 		if err := r.ParseForm(); err != nil {
 			fmt.Fprintf(w, "ParseForm() err: %v", err)
 			return
@@ -98,11 +102,23 @@ func otherUserPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func searchUserPage(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil || len(r.FormValue("q")) < 1 {
+		users := models.GetUsersLimitBy(100)
+		renderTemplate("internal/web/templates/search.amber", ListOfUsers{Users: users}, w)
+		return
+	}
+
+	users := models.GetUsersByNamePrefix(r.FormValue("q"), 100)
+	renderTemplate("internal/web/templates/search.amber", ListOfUsers{Users: users}, w)
+}
+
 func ServeForever() {
 	router := mux.NewRouter()
-	router.HandleFunc("/signup", registerUser)
 	router.HandleFunc("/login", authenticateUser)
 	router.HandleFunc("/mypage", selfUserPage)
+	router.HandleFunc("/search", searchUserPage)
+	router.HandleFunc("/signup", registerUser)
 	router.HandleFunc("/user/{id}", otherUserPage)
 
 	log.Fatal(http.ListenAndServe(
