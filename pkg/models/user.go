@@ -79,14 +79,9 @@ func GetUsersByNamePrefix(prefix string, limit int) []User {
 	prefix += "%"
 	result := db.Db.Select(
 		&users,
-		`SELECT * FROM (
-			SELECT id, first_name, last_name FROM user WHERE first_name LIKE ?
-			UNION ALL
-			SELECT id, first_name, last_name FROM user WHERE last_name LIKE ?
-				AND NOT first_name LIKE ?
-		) utmp
+		`SELECT id, first_name, last_name FROM user WHERE first_name LIKE ? OR last_name LIKE ?
 		ORDER BY id LIMIT ?`,
-		prefix, prefix, prefix, limit,
+		prefix, prefix, limit,
 	)
 	if result != nil {
 		panic(result)
