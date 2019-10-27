@@ -1,6 +1,5 @@
-doctype 5
-html
-  body
+extends base
+  block content
     form#search[method="get"]
       input#search-q[name="q"]
     table

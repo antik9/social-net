@@ -37,6 +37,13 @@ func renderTemplate(path string, data interface{}, w http.ResponseWriter) error 
 func authenticateUser(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		if cookie, ok := r.Cookie("sn-session"); ok == nil {
+			user := models.GetUserBySessionValue(cookie.Value)
+			if user != nil {
+				http.Redirect(w, r, "mypage", http.StatusFound)
+				return
+			}
+		}
 		renderTemplate("internal/web/templates/login.amber", nil, w)
 	case http.MethodPost:
 		if err := r.ParseForm(); err != nil {
@@ -56,9 +63,27 @@ func authenticateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func indexPage(w http.ResponseWriter, r *http.Request) {
+	renderTemplate("internal/web/templates/base.amber", nil, w)
+}
+
+func logoutUser(w http.ResponseWriter, r *http.Request) {
+	expiration := time.Now().Add(1 * time.Hour)
+	cookie := http.Cookie{Name: "sn-session", Value: "", Expires: expiration}
+	http.SetCookie(w, &cookie)
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+}
+
 func registerUser(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		if cookie, ok := r.Cookie("sn-session"); ok == nil {
+			user := models.GetUserBySessionValue(cookie.Value)
+			if user != nil {
+				http.Redirect(w, r, "mypage", http.StatusFound)
+				return
+			}
+		}
 		renderTemplate("internal/web/templates/registration.amber", nil, w)
 	case http.MethodPost:
 		if err := r.ParseForm(); err != nil {
@@ -90,16 +115,22 @@ func selfUserPage(w http.ResponseWriter, r *http.Request) {
 		user := models.GetUserBySessionValue(cookie.Value)
 		if user != nil {
 			renderTemplate("internal/web/templates/userpage.amber", user, w)
+			return
 		}
 	}
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }
 
 func otherUserPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	if id, err := strconv.Atoi(vars["id"]); err == nil {
 		user := models.GetUserById(id)
-		renderTemplate("internal/web/templates/otheruserpage.amber", user, w)
+		if user != nil {
+			renderTemplate("internal/web/templates/otheruserpage.amber", user, w)
+			return
+		}
 	}
+	http.NotFound(w, r)
 }
 
 func searchUserPage(w http.ResponseWriter, r *http.Request) {
@@ -116,10 +147,15 @@ func searchUserPage(w http.ResponseWriter, r *http.Request) {
 func ServeForever() {
 	router := mux.NewRouter()
 	router.HandleFunc("/login", authenticateUser)
+	router.HandleFunc("/logout", logoutUser)
 	router.HandleFunc("/mypage", selfUserPage)
 	router.HandleFunc("/search", searchUserPage)
+	router.PathPrefix("/static/").Handler(
+		http.StripPrefix("/static/", http.FileServer(http.Dir("internal/web/static"))),
+	)
 	router.HandleFunc("/signup", registerUser)
 	router.HandleFunc("/user/{id}", otherUserPage)
+	router.HandleFunc("/", indexPage)
 
 	log.Fatal(http.ListenAndServe(
 		fmt.Sprintf(

@@ -1,0 +1,23 @@
+doctype 5
+html
+  head
+    title
+      block title
+        | Social Net
+  body
+    block authorization
+      div[class="mypage"]
+        a[href="/mypage"] My Page
+      div[class="logout"]
+        a[href="/logout"] Logout
+      div[class="login"]
+        a[href="/login"] Login
+      div[class="signup"]
+        a[href="/signup"] Signup
+      br
+      div[class="search"]
+        a[href="/search"] Search other users
+      br
+    block content
+    block scripts
+      script[src="/static/js/authorization.js"]

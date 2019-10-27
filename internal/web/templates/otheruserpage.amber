@@ -1,6 +1,5 @@
-doctype 5
-html
-  body
+extends base
+  block content
     table
       tr
         th First name:
