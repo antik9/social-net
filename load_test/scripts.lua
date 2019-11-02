@@ -19,7 +19,7 @@ function load_url_paths_from_file(file)
 end
 
 -- Load URL paths from file
-paths = load_url_paths_from_file("urls3symbols.txt")
+paths = load_url_paths_from_file("mixed.txt")
 
 print("multiplepaths: Found " .. #paths .. " paths")
 

@@ -1,0 +1,7 @@
+---
+MASTER_PASS: "oWQ41vrxEI=MW)Q+"
+SLAVE_PASS: "tBs_(ezY4TFwFIuT"
+REPL_USER: "social"
+REPL_PASS: "HfP4aCk7rqm;m]z)"
+DB_NAME: "social"
+MASTER_HOST: "10.10.0.1"

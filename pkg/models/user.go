@@ -77,7 +77,9 @@ func GetUsersLimitBy(limit int) []User {
 func GetUsersByNamePrefix(prefix string, limit int) []User {
 	var users []User
 	prefix += "%"
-	result := db.Db.Select(
+
+	replica := db.GetRandomReplica()
+	result := replica.Select(
 		&users,
 		`SELECT id, first_name, last_name FROM user WHERE first_name LIKE ? OR last_name LIKE ?
 		ORDER BY id LIMIT ?`,

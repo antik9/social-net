@@ -5,6 +5,7 @@ database:
     port: 3306
     password: social
     extra: "charset=utf8&collation=utf8_general_ci"
+    replicas:
 
 server:
     host: 0.0.0.0

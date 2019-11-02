@@ -1,0 +1,52 @@
+---
+- hosts: master,slave1,slave2,slave3,slave4
+  vars_files:
+    - vars.yml
+  become: true
+  tasks:
+  - name: Add repository to yum.repos.d
+    yum: state=present name="https://dev.mysql.com/get/mysql57-community-release-el7-9.noarch.rpm"
+  - name: install mysql-server
+    yum: name="mysql-server" state=latest
+  - name: copy configs for mysql servers
+    template: src="{{ HOST }}/{{ item }}.cnf" dest=/etc/my.cnf.d/
+    with_items:
+        - 01-basics
+        - 02-binlog
+  - name: enable new configs
+    shell: |
+        echo "!includedir /etc/my.cnf.d" >> /etc/my.cnf
+  - name: copy start script
+    template: src="{{ HOST }}/script.sql.j2" dest=/var/lib/mysql/.script.sql
+  - name: start mysqld
+    systemd: service=mysqld enabled=yes state=restarted
+  - name: save root password for mysql
+    shell: |
+        cat /var/log/mysqld.log | grep 'root@localhost:' | awk '{print $11}' > /var/lib/mysql/.pass
+  - name: Copy monitoring script
+    copy: src="monitor.sh" dest="/home/vagrant/monitor.sh"
+
+- hosts: master
+  vars_files:
+    - vars.yml
+  become: true
+  tasks:
+  - name: Copy dump of preexisting data
+    copy: src="social.dump.sql" dest="/tmp/social.dump.sql"
+  - name: create database, load dump to it and dump from it with needed tables
+    shell: |
+        export MYSQL_PASS=$(cat /var/lib/mysql/.pass)
+        cat /var/lib/mysql/.script.sql | mysql -uroot -p$MYSQL_PASS --connect-expired-password
+        rm /var/lib/mysql/.script.sql
+        mysql -uroot -p'{{ MASTER_PASS }}' -D '{{ DB_NAME }}' < /tmp/social.dump.sql
+
+- hosts: slave1,slave2,slave3,slave4
+  vars_files:
+    - vars.yml
+  become: true
+  tasks:
+  - name: load master dump and start slave
+    shell: |
+        export MYSQL_PASS=$(cat /var/lib/mysql/.pass)
+        mysqldump -h '{{ MASTER_HOST }}' -u'{{ REPL_USER }}' -p'{{ REPL_PASS }}' '{{ DB_NAME }}' > /tmp/social.dump.sql
+        cat /var/lib/mysql/.script.sql | mysql -uroot -p$MYSQL_PASS --connect-expired-password

@@ -1,0 +1,5 @@
+[mysqld]
+log-bin = /var/lib/mysql/mybin.log
+expire-logs-days = 14
+max-binlog-size  = 500M
+binlog-format = STATEMENT
