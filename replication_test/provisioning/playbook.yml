@@ -37,7 +37,6 @@
     shell: |
         export MYSQL_PASS=$(cat /var/lib/mysql/.pass)
         cat /var/lib/mysql/.script.sql | mysql -uroot -p$MYSQL_PASS --connect-expired-password
-        rm /var/lib/mysql/.script.sql
         mysql -uroot -p'{{ MASTER_PASS }}' -D '{{ DB_NAME }}' < /tmp/social.dump.sql
 
 - hosts: slave1,slave2,slave3,slave4

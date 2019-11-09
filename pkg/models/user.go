@@ -130,16 +130,23 @@ func NewUser(
 			_interests = append(_interests, getOrCreateInterest(interest))
 		}
 		hash := passwordHash(password)
-		db.Db.MustExec(
+		tx, err := db.Db.Begin()
+		if err != nil {
+			return nil, err
+		}
+		_, err = tx.Exec(
 			`INSERT INTO user (first_name, last_name, email, password, age, city_id)
 			VALUES (?, ?, ?, ?, ?, ?)`,
 			firstName, lastName, email, hash, age, city.Id,
 		)
-		user := getUserByEmail(email, false)
-		for _, interest := range _interests {
-			user.AddInterest(interest)
+		if err != nil {
+			return nil, err
 		}
-		user.ChangeCity(city)
+		user := getUserByEmail(email, false)
+		err = tx.Commit()
+		if err != nil {
+			return nil, err
+		}
 		return user, nil
 	}
 }

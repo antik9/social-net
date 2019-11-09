@@ -3,3 +3,6 @@ CREATE DATABASE IF NOT EXISTS {{ DB_NAME }};
 CREATE USER '{{ REPL_USER }}'@'%' IDENTIFIED BY '{{ REPL_PASS }}';
 GRANT REPLICATION SLAVE ON *.* TO '{{ REPL_USER }}'@'%' IDENTIFIED BY '{{ REPL_PASS }}';
 GRANT ALL ON *.* TO '{{ REPL_USER }}'@'%';
+INSTALL PLUGIN rpl_semi_sync_master SONAME 'semisync_master.so';
+SET GLOBAL rpl_semi_sync_master_enabled = 1;
+SET GLOBAL rpl_semi_sync_master_timeout = 5000;

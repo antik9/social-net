@@ -93,7 +93,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 
 		if r.FormValue("password") == r.FormValue("password2") && len(r.FormValue("password")) > 0 {
 			if age, err := strconv.Atoi(r.FormValue("age")); err == nil {
-				models.NewUser(
+				_, err := models.NewUser(
 					r.FormValue("city"),
 					r.FormValue("first_name"),
 					r.FormValue("last_name"),
@@ -102,6 +102,10 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 					age,
 					strings.Split(r.FormValue("interests"), ","),
 				)
+				if err != nil {
+					http.Error(w, "Invalid data", http.StatusBadRequest)
+					return
+				}
 			}
 		}
 		http.Redirect(w, r, "/login", http.StatusFound)

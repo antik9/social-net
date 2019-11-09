@@ -40,32 +40,6 @@ MACHINES = {
         :HOST => "slave",
         :ID => 3,
     },
-    "slave3": {
-        :box_name => "centos/7",
-		:net => [
-            {
-                virtualbox__intnet: "db-net",
-                adapter: 2,
-                ip: "10.10.0.4",
-                netmask: "255.255.255.248",
-            },
-        ],
-        :HOST => "slave",
-        :ID => 4,
-    },
-    "slave4": {
-        :box_name => "centos/7",
-		:net => [
-            {
-                virtualbox__intnet: "db-net",
-                adapter: 2,
-                ip: "10.10.0.5",
-                netmask: "255.255.255.248",
-            },
-        ],
-        :HOST => "slave",
-        :ID => 5,
-    },
 }
 
 
