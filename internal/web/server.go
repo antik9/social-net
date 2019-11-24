@@ -20,6 +20,11 @@ type ListOfUsers struct {
 	Users []models.User
 }
 
+type ListOfMessages struct {
+	Messages    []models.Message
+	User, Other *models.User
+}
+
 func renderTemplate(path string, data interface{}, w http.ResponseWriter) error {
 	compiler := amber.New()
 	err := compiler.ParseFile(path)
@@ -37,12 +42,9 @@ func renderTemplate(path string, data interface{}, w http.ResponseWriter) error 
 func authenticateUser(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		if cookie, ok := r.Cookie("sn-session"); ok == nil {
-			user := models.GetUserBySessionValue(cookie.Value)
-			if user != nil {
-				http.Redirect(w, r, "mypage", http.StatusFound)
-				return
-			}
+		if user := getUserBySession(r); user != nil {
+			http.Redirect(w, r, "mypage", http.StatusFound)
+			return
 		}
 		renderTemplate("internal/web/templates/login.amber", nil, w)
 	case http.MethodPost:
@@ -77,12 +79,9 @@ func logoutUser(w http.ResponseWriter, r *http.Request) {
 func registerUser(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		if cookie, ok := r.Cookie("sn-session"); ok == nil {
-			user := models.GetUserBySessionValue(cookie.Value)
-			if user != nil {
-				http.Redirect(w, r, "mypage", http.StatusFound)
-				return
-			}
+		if user := getUserBySession(r); user != nil {
+			http.Redirect(w, r, "mypage", http.StatusFound)
+			return
 		}
 		renderTemplate("internal/web/templates/registration.amber", nil, w)
 	case http.MethodPost:
@@ -111,24 +110,60 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func selfUserPage(w http.ResponseWriter, r *http.Request) {
+	if user := getUserBySession(r); user != nil {
+		renderTemplate("internal/web/templates/userpage.amber", user, w)
+		return
+	}
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+}
+
+func getUserBySession(r *http.Request) *models.User {
 	if cookie, ok := r.Cookie("sn-session"); ok == nil {
-		user := models.GetUserBySessionValue(cookie.Value)
-		if user != nil {
-			renderTemplate("internal/web/templates/userpage.amber", user, w)
+		return models.GetUserBySessionValue(cookie.Value)
+	}
+	return nil
+}
+
+func getUserById(vars map[string]string) *models.User {
+	if id, err := strconv.Atoi(vars["id"]); err == nil {
+		return models.GetUserById(id)
+	}
+	return nil
+}
+
+func chatWith(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	if user := getUserBySession(r); user != nil {
+		if other := getUserById(vars); other != nil {
+			switch r.Method {
+			case http.MethodGet:
+				messages := models.GetMessagesForUsers(user, other)
+				renderTemplate(
+					"internal/web/templates/messages.amber",
+					ListOfMessages{Messages: messages, User: user, Other: other},
+					w,
+				)
+			case http.MethodPost:
+				if err := r.ParseForm(); err == nil {
+					if message := r.FormValue("message"); message != "" {
+						models.SaveMessage(message, user, other)
+					}
+				}
+				http.Redirect(w, r, "/chat/"+vars["id"], http.StatusFound)
+			}
 			return
 		}
+		http.NotFound(w, r)
+		return
 	}
 	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }
 
 func otherUserPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	if id, err := strconv.Atoi(vars["id"]); err == nil {
-		user := models.GetUserById(id)
-		if user != nil {
-			renderTemplate("internal/web/templates/otheruserpage.amber", user, w)
-			return
-		}
+	if user := getUserById(vars); user != nil {
+		renderTemplate("internal/web/templates/otheruserpage.amber", user, w)
+		return
 	}
 	http.NotFound(w, r)
 }
@@ -154,6 +189,7 @@ func ServeForever() {
 		http.StripPrefix("/static/", http.FileServer(http.Dir("internal/web/static"))),
 	)
 	router.HandleFunc("/signup", registerUser)
+	router.HandleFunc("/chat/{id}", chatWith)
 	router.HandleFunc("/user/{id}", otherUserPage)
 	router.HandleFunc("/", indexPage)
 

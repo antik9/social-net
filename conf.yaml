@@ -6,6 +6,9 @@ database:
     password: social
     extra: "charset=utf8&collation=utf8_general_ci"
     replicas:
+        # - "localhost:3307"
+    chat_shards:
+        # - "localhost:3308"
 
 server:
     host: 0.0.0.0

@@ -12,13 +12,14 @@ import (
 // Config is a configuration from yaml
 type Config struct {
 	Database struct {
-		Name     string   `yaml:"name"`
-		Username string   `yaml:"username"`
-		Host     string   `yaml:"host"`
-		Port     string   `yaml:"port"`
-		Password string   `yaml:"password"`
-		Extra    string   `yaml:"extra"`
-		Replicas []string `yaml:"replicas"`
+		Name       string   `yaml:"name"`
+		Username   string   `yaml:"username"`
+		Host       string   `yaml:"host"`
+		Port       string   `yaml:"port"`
+		Password   string   `yaml:"password"`
+		Extra      string   `yaml:"extra"`
+		Replicas   []string `yaml:"replicas"`
+		ChatShards []string `yaml:"chat_shards"`
 	} `yaml:"database"`
 
 	Server struct {

@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 var (
 	Db       *sqlx.DB
+	chatDbs  []*sqlx.DB
 	replicas []*sqlx.DB
 	err      error
 )
@@ -43,6 +45,20 @@ func init() {
 		projecterrors.FailOnErr(err)
 		replicas = append(replicas, db)
 	}
+
+	for _, shard := range config.Conf.Database.ChatShards {
+		connectionParams = fmt.Sprintf(
+			"%s:%s@(%s)/%s?%s",
+			config.Conf.Database.Username,
+			config.Conf.Database.Password,
+			shard,
+			config.Conf.Database.Name,
+			config.Conf.Database.Extra,
+		)
+		db, err := sqlx.Connect("mysql", connectionParams)
+		projecterrors.FailOnErr(err)
+		chatDbs = append(chatDbs, db)
+	}
 }
 
 func GetRandomReplica() *sqlx.DB {
@@ -51,4 +67,11 @@ func GetRandomReplica() *sqlx.DB {
 		return replicas[rand.Intn(len(replicas))]
 	}
 	return Db
+}
+
+func GetChatShard(hash int) *sqlx.DB {
+	if len(chatDbs) == 0 {
+		log.Fatal("no chat shards available")
+	}
+	return chatDbs[hash%len(chatDbs)]
 }

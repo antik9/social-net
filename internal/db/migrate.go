@@ -6,4 +6,8 @@ func InitialMigrate() {
 	Db.MustExec(interestSchema)
 	Db.MustExec(userInterestsSchema)
 	Db.MustExec(sessionSchema)
+
+	for _, shard := range chatDbs {
+		shard.MustExec(messageSchema)
+	}
 }

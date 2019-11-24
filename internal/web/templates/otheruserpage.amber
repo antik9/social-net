@@ -18,3 +18,6 @@ extends base
         td
           each $interest in Interests
             p #{$interest.Name}
+    br
+    div
+      a[href="/chat/" + Id] Send message

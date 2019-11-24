@@ -1,0 +1,19 @@
+extends base
+  block content
+    $userId = User.Id
+    $friendName = Other.FirstName
+    h3 Chat with #{$friendName}
+    div
+      each $message in Messages
+        if $userId == $message.SenderId
+          div #{$message.Timestamp}
+          div You: #{$message.Message}
+        else
+          div #{$message.Timestamp}
+          div #{$friendName}: #{$message.Message}
+        br
+    br
+    form[method="post"]
+      input[name="message"]
+      button[type="submit"] Send
+

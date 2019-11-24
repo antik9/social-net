@@ -40,7 +40,7 @@ MACHINES = {
         :HOST => "slave",
         :ID => 3,
     },
-    "slave3": {
+    "chat1": {
         :box_name => "centos/7",
 		:net => [
             {
@@ -50,10 +50,10 @@ MACHINES = {
                 netmask: "255.255.255.248",
             },
         ],
-        :HOST => "slave",
+        :HOST => "master",
         :ID => 4,
     },
-    "slave4": {
+    "chat2": {
         :box_name => "centos/7",
 		:net => [
             {
@@ -63,7 +63,7 @@ MACHINES = {
                 netmask: "255.255.255.248",
             },
         ],
-        :HOST => "slave",
+        :HOST => "master",
         :ID => 5,
     },
 }

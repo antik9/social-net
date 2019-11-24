@@ -1,5 +1,5 @@
 ---
-- hosts: master,slave1,slave2,slave3,slave4
+- hosts: master,slave1,slave2,chat1,chat2
   vars_files:
     - vars.yml
   become: true
@@ -26,7 +26,7 @@
   - name: Copy monitoring script
     copy: src="monitor.sh" dest="/home/vagrant/monitor.sh"
 
-- hosts: master
+- hosts: master,chat1,chat2
   vars_files:
     - vars.yml
   become: true
