@@ -18,6 +18,9 @@ html
       div[class="search"]
         a[href="/search"] Search other users
       br
+      div[class="feed"]
+        a[href="/feed"] Feed
+      br
     block content
     block scripts
       script[src="/static/js/authorization.js"]

@@ -50,3 +50,32 @@
         export MYSQL_PASS=$(cat /var/lib/mysql/.pass)
         mysqldump -h '{{ MASTER_HOST }}' -u'{{ REPL_USER }}' -p'{{ REPL_PASS }}' '{{ DB_NAME }}' > /tmp/social.dump.sql
         cat /var/lib/mysql/.script.sql | mysql -uroot -p$MYSQL_PASS --connect-expired-password
+
+- hosts: redis,rabbitmq
+  become: true
+  tasks:
+  - name: install epel-release
+    yum: state=latest name=epel-release
+
+- hosts: redis
+  vars_files:
+    - vars.yml
+  become: true
+  tasks:
+  - name: install redis
+    yum: state=latest name=redis
+  - name: replace bind address for redis
+    shell: |
+        sed -i 's/^bind 127.0.0.1/bind 0.0.0.0/g' /etc/redis.conf
+  - name: start redis
+    systemd: service=redis enabled=yes state=restarted
+
+- hosts: rabbitmq
+  vars_files:
+    - vars.yml
+  become: true
+  tasks:
+  - name: install rabbitmq-server
+    yum: state=latest name=rabbitmq-server
+  - name: start rabbitmq-server
+    systemd: service=rabbitmq-server enabled=yes state=restarted

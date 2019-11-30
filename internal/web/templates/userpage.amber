@@ -3,21 +3,29 @@ extends base
     table
       tr
         th First name:
-        td #{FirstName}
+        td #{User.FirstName}
       tr
         th Last name:
-        td #{LastName}
+        td #{User.LastName}
       tr
         th Age:
-        td #{Age}
+        td #{User.Age}
       tr
         th Email:
-        td #{Email}
+        td #{User.Email}
       tr
         th City:
-        td #{City.Name}
+        td #{User.City.Name}
       tr
         th Interests:
         td
-          each $interest in Interests
+          each $interest in User.Interests
             p #{$interest.Name}
+    form[action="/new_feed/"][method="post"]
+      textarea[name="message"][rows="5"][cols="50"]
+      br
+      button[type="submit"] Send
+    br
+    each $message in FeedMessages
+      p[style="color: gray"] #{$message.Timestamp}
+      p #{$message.Message}

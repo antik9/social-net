@@ -22,6 +22,18 @@ type Config struct {
 		ChatShards []string `yaml:"chat_shards"`
 	} `yaml:"database"`
 
+	Redis struct {
+		Address  string `yaml:"address"`
+		Password string `yaml:"password"`
+	} `yaml:"redis"`
+
+	Rabbit struct {
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+		Host     string `yaml:"host"`
+		Port     string `yaml:"port"`
+	}
+
 	Server struct {
 		Host string `yaml:"host"`
 		Port string `yaml:"port"`

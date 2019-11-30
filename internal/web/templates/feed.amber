@@ -1,0 +1,7 @@
+extends base
+  block content
+    div
+      each $message in FeedMessages
+        p[style="color: gray"] #{$message.Timestamp}
+          a[href="/user/" + $message.AuthorId] #{$message.AuthorName}
+        p #{$message.Message}

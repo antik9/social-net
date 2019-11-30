@@ -26,5 +26,5 @@ function hide(...classNames) {
 if (getCookie('sn-session') !== '') {
     hide('login', 'signup');
 } else {
-    hide('logout', 'mypage');
+    hide('logout', 'mypage', 'feed');
 }

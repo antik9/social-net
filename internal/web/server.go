@@ -1,19 +1,24 @@
 package web
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/antik9/social-net/internal/config"
-	"github.com/antik9/social-net/internal/errors"
-	"github.com/antik9/social-net/pkg/models"
 	"github.com/eknkc/amber"
 	"github.com/gorilla/mux"
+
+	"github.com/antik9/social-net/internal/cache"
+	"github.com/antik9/social-net/internal/config"
+	"github.com/antik9/social-net/internal/errors"
+	"github.com/antik9/social-net/internal/queue"
+	"github.com/antik9/social-net/pkg/models"
 )
 
 type ListOfUsers struct {
@@ -25,16 +30,52 @@ type ListOfMessages struct {
 	User, Other *models.User
 }
 
-func renderTemplate(path string, data interface{}, w http.ResponseWriter) error {
+type UserFeed struct {
+	FeedMessages []models.FeedMessage
+	User         *models.User
+}
+
+var (
+	producer = queue.NewClient("producer")
+)
+
+func prepareTemplate(path string) (*template.Template, error) {
 	compiler := amber.New()
 	err := compiler.ParseFile(path)
 	if err != nil {
-		return errors.New(projecterrors.UnknownTemplateError)
+		return nil, errors.New(projecterrors.UnknownTemplateError)
 	}
 	tpl, err := compiler.Compile()
 	if err != nil {
-		return errors.New(projecterrors.UnknownTemplateError)
+		return nil, errors.New(projecterrors.UnknownTemplateError)
 	}
+	return tpl, nil
+}
+
+func renderTemplate(path string, data interface{}, w http.ResponseWriter) error {
+	tpl, err := prepareTemplate(path)
+	if err != nil {
+		return err
+	}
+	tpl.Execute(w, data)
+	return nil
+}
+
+func renderFeedWithCache(key, path string, data interface{}, w http.ResponseWriter) error {
+	cachedPage := cache.RedisCache.GetFeedPage(key)
+	if cachedPage != "" {
+		w.Write([]byte(cachedPage))
+		return nil
+	}
+
+	tpl, err := prepareTemplate(path)
+	if err != nil {
+		return err
+	}
+	buffer := bytes.NewBufferString("")
+	tpl.Execute(buffer, data)
+	cache.RedisCache.CacheFeedPage(key, buffer.String())
+
 	tpl.Execute(w, data)
 	return nil
 }
@@ -111,7 +152,23 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 
 func selfUserPage(w http.ResponseWriter, r *http.Request) {
 	if user := getUserBySession(r); user != nil {
-		renderTemplate("internal/web/templates/userpage.amber", user, w)
+		userFeed := UserFeed{
+			User:         user,
+			FeedMessages: user.ListOwnFeedLimitBy(10),
+		}
+		renderTemplate("internal/web/templates/userpage.amber", userFeed, w)
+		return
+	}
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+}
+
+func feedMessages(w http.ResponseWriter, r *http.Request) {
+	if user := getUserBySession(r); user != nil {
+		userFeed := UserFeed{
+			User:         user,
+			FeedMessages: user.ListFeedLimitBy(10),
+		}
+		renderFeedWithCache(strconv.Itoa(user.Id), "internal/web/templates/feed.amber", userFeed, w)
 		return
 	}
 	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
@@ -159,10 +216,51 @@ func chatWith(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }
 
+func saveFeedMessage(w http.ResponseWriter, r *http.Request) {
+	if user := getUserBySession(r); user != nil {
+		switch r.Method {
+		case http.MethodPost:
+			if err := r.ParseForm(); err == nil {
+				if message := r.FormValue("message"); message != "" {
+					id, err := user.CreateFeedMessage(message)
+					if err == nil {
+						producer.SendMessage(strconv.FormatInt(id, 10))
+					}
+				}
+			}
+			http.Redirect(w, r, "/mypage", http.StatusFound)
+		default:
+			http.NotFound(w, r)
+		}
+		return
+	}
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+}
+
+func subscribeTo(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	if user := getUserBySession(r); user != nil {
+		if other := getUserById(vars); other != nil {
+			if r.Method == http.MethodPost {
+				user.SubscribeTo(other)
+				http.Redirect(w, r, "/user/"+vars["id"], http.StatusFound)
+			}
+			return
+		}
+		http.NotFound(w, r)
+		return
+	}
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+}
+
 func otherUserPage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	if user := getUserById(vars); user != nil {
-		renderTemplate("internal/web/templates/otheruserpage.amber", user, w)
+		userFeed := UserFeed{
+			User:         user,
+			FeedMessages: user.ListOwnFeedLimitBy(10),
+		}
+		renderTemplate("internal/web/templates/otheruserpage.amber", userFeed, w)
 		return
 	}
 	http.NotFound(w, r)
@@ -190,6 +288,9 @@ func ServeForever() {
 	)
 	router.HandleFunc("/signup", registerUser)
 	router.HandleFunc("/chat/{id}", chatWith)
+	router.HandleFunc("/new_feed/", saveFeedMessage)
+	router.HandleFunc("/feed", feedMessages)
+	router.HandleFunc("/subscribe/{id}", subscribeTo)
 	router.HandleFunc("/user/{id}", otherUserPage)
 	router.HandleFunc("/", indexPage)
 

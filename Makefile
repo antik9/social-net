@@ -7,3 +7,6 @@ migrate:
 
 server:
 	go build -o sn-server cmd/server/main.go
+
+queue:
+	go build -o sn-queue cmd/queue/main.go

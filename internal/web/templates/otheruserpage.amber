@@ -1,23 +1,32 @@
 extends base
   block content
-    table
-      tr
-        th First name:
-        td #{FirstName}
-      tr
-        th Last name:
-        td #{LastName}
-      tr
-        th Age:
-        td #{Age}
-      tr
-        th City:
-        td #{City.Name}
-      tr
-        th Interests:
-        td
-          each $interest in Interests
-            p #{$interest.Name}
-    br
-    div
-      a[href="/chat/" + Id] Send message
+    div[style="float:left; width:30%;"]
+      table
+        tr
+          th First name:
+          td #{User.FirstName}
+        tr
+          th Last name:
+          td #{User.LastName}
+        tr
+          th Age:
+          td #{User.Age}
+        tr
+          th City:
+          td #{User.City.Name}
+        tr
+          th Interests:
+          td
+            each $interest in User.Interests
+              p #{$interest.Name}
+      br
+      div
+        a[href="/chat/" + User.Id] Send message
+      br
+      div
+        form[method="post"][action="/subscribe/" + User.Id]
+          button[type="submit"] Subscribe
+    div[style="float:left; width:50%;"]
+      each $message in FeedMessages
+        p[style="color: gray"] #{$message.Timestamp}
+        p #{$message.Message}

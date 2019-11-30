@@ -8,7 +8,7 @@ MACHINES = {
                 virtualbox__intnet: "db-net",
                 adapter: 2,
                 ip: "10.10.0.1",
-                netmask: "255.255.255.248",
+                netmask: "255.255.255.240",
             },
         ],
         :HOST => "master",
@@ -21,7 +21,7 @@ MACHINES = {
                 virtualbox__intnet: "db-net",
                 adapter: 2,
                 ip: "10.10.0.2",
-                netmask: "255.255.255.248",
+                netmask: "255.255.255.240",
             },
         ],
         :HOST => "slave",
@@ -34,7 +34,7 @@ MACHINES = {
                 virtualbox__intnet: "db-net",
                 adapter: 2,
                 ip: "10.10.0.3",
-                netmask: "255.255.255.248",
+                netmask: "255.255.255.240",
             },
         ],
         :HOST => "slave",
@@ -47,7 +47,7 @@ MACHINES = {
                 virtualbox__intnet: "db-net",
                 adapter: 2,
                 ip: "10.10.0.4",
-                netmask: "255.255.255.248",
+                netmask: "255.255.255.240",
             },
         ],
         :HOST => "master",
@@ -60,11 +60,37 @@ MACHINES = {
                 virtualbox__intnet: "db-net",
                 adapter: 2,
                 ip: "10.10.0.5",
-                netmask: "255.255.255.248",
+                netmask: "255.255.255.240",
             },
         ],
         :HOST => "master",
         :ID => 5,
+    },
+    "redis": {
+        :box_name => "centos/7",
+		:net => [
+            {
+                virtualbox__intnet: "db-net",
+                adapter: 2,
+                ip: "10.10.0.6",
+                netmask: "255.255.255.240",
+            },
+        ],
+        :HOST => "redis",
+        :ID => 6,
+    },
+    "rabbitmq": {
+        :box_name => "centos/7",
+		:net => [
+            {
+                virtualbox__intnet: "db-net",
+                adapter: 2,
+                ip: "10.10.0.7",
+                netmask: "255.255.255.240",
+            },
+        ],
+        :HOST => "rabbitmq",
+        :ID => 7,
     },
 }
 
@@ -78,9 +104,17 @@ Vagrant.configure("2") do |config|
             box.vm.box = boxconfig[:box_name]
             box.vm.box_version = boxconfig[:box_version]
 
-            box.vm.host_name = boxname.to_s
-            box.vm.network "forwarded_port", guest: 3306, host: 3306, auto_correct: true
-            box.vm.network "forwarded_port", guest: 8000, host: 8000, auto_correct: true
+            __boxname = boxname.to_s
+            box.vm.host_name = __boxname
+
+            if __boxname.match(/master/) || __boxname.match(/slave\d/) || __boxname.match(/chat\d/)
+              box.vm.network "forwarded_port", guest: 3306, host: 3306, auto_correct: true
+              box.vm.network "forwarded_port", guest: 8000, host: 8000, auto_correct: true
+            elsif __boxname.match(/redis/)
+              box.vm.network "forwarded_port", guest: 6379, host: 6379, auto_correct: true
+            elsif __boxname.match(/rabbitmq/)
+              box.vm.network "forwarded_port", guest: 5672, host: 5672, auto_correct: true
+            end
 
             boxconfig[:net].each do |ipconf|
                 box.vm.network "private_network", ipconf
