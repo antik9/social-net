@@ -92,6 +92,19 @@ MACHINES = {
         :HOST => "rabbitmq",
         :ID => 7,
     },
+    "tarantool": {
+        :box_name => "centos/7",
+		:net => [
+            {
+                virtualbox__intnet: "db-net",
+                adapter: 2,
+                ip: "10.10.0.8",
+                netmask: "255.255.255.240",
+            },
+        ],
+        :HOST => "tarantool",
+        :ID => 8,
+    },
 }
 
 
@@ -114,6 +127,8 @@ Vagrant.configure("2") do |config|
               box.vm.network "forwarded_port", guest: 6379, host: 6379, auto_correct: true
             elsif __boxname.match(/rabbitmq/)
               box.vm.network "forwarded_port", guest: 5672, host: 5672, auto_correct: true
+            elsif __boxname.match(/tarantool/)
+              box.vm.network "forwarded_port", guest: 3301, host: 3301, auto_correct: true
             end
 
             boxconfig[:net].each do |ipconf|

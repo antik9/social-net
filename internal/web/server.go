@@ -174,6 +174,19 @@ func feedMessages(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 }
 
+func feedUserMessages(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	if user := getUserById(vars); user != nil {
+		userFeed := UserFeed{
+			User:         user,
+			FeedMessages: user.ListOwnFeedLimitBy(100),
+		}
+		renderTemplate("internal/web/templates/feed.amber", userFeed, w)
+		return
+	}
+	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+}
+
 func getUserBySession(r *http.Request) *models.User {
 	if cookie, ok := r.Cookie("sn-session"); ok == nil {
 		return models.GetUserBySessionValue(cookie.Value)
@@ -290,6 +303,7 @@ func ServeForever() {
 	router.HandleFunc("/chat/{id}", chatWith)
 	router.HandleFunc("/new_feed/", saveFeedMessage)
 	router.HandleFunc("/feed", feedMessages)
+	router.HandleFunc("/feed/{id}", feedUserMessages)
 	router.HandleFunc("/subscribe/{id}", subscribeTo)
 	router.HandleFunc("/user/{id}", otherUserPage)
 	router.HandleFunc("/", indexPage)

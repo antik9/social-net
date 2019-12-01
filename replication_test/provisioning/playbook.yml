@@ -5,9 +5,9 @@
   become: true
   tasks:
   - name: Add repository to yum.repos.d
-    yum: state=present name="https://dev.mysql.com/get/mysql57-community-release-el7-9.noarch.rpm"
+    yum: state=present name="http://repo.mysql.com/yum/mysql-5.6-community/el/7/x86_64/mysql-community-release-el7-5.noarch.rpm"
   - name: install mysql-server
-    yum: name="mysql-server" state=latest
+    yum: name="mysql-community-server" state=latest
   - name: copy configs for mysql servers
     template: src="{{ HOST }}/{{ item }}.cnf" dest=/etc/my.cnf.d/
     with_items:
@@ -20,9 +20,6 @@
     template: src="{{ HOST }}/script.sql.j2" dest=/var/lib/mysql/.script.sql
   - name: start mysqld
     systemd: service=mysqld enabled=yes state=restarted
-  - name: save root password for mysql
-    shell: |
-        cat /var/log/mysqld.log | grep 'root@localhost:' | awk '{print $11}' > /var/lib/mysql/.pass
   - name: Copy monitoring script
     copy: src="monitor.sh" dest="/home/vagrant/monitor.sh"
 
@@ -31,14 +28,10 @@
     - vars.yml
   become: true
   tasks:
-  - name: Copy dump of preexisting data
-    copy: src="social.dump.sql" dest="/tmp/social.dump.sql"
   - name: create database, load dump to it and dump from it with needed tables
     shell: |
-        export MYSQL_PASS=$(cat /var/lib/mysql/.pass)
-        cat /var/lib/mysql/.script.sql | mysql -uroot -p$MYSQL_PASS --connect-expired-password
+        cat /var/lib/mysql/.script.sql | mysql -uroot
         rm /var/lib/mysql/.script.sql
-        mysql -uroot -p'{{ MASTER_PASS }}' -D '{{ DB_NAME }}' < /tmp/social.dump.sql
 
 - hosts: slave1,slave2,slave3,slave4
   vars_files:
@@ -47,11 +40,10 @@
   tasks:
   - name: load master dump and start slave
     shell: |
-        export MYSQL_PASS=$(cat /var/lib/mysql/.pass)
         mysqldump -h '{{ MASTER_HOST }}' -u'{{ REPL_USER }}' -p'{{ REPL_PASS }}' '{{ DB_NAME }}' > /tmp/social.dump.sql
-        cat /var/lib/mysql/.script.sql | mysql -uroot -p$MYSQL_PASS --connect-expired-password
+        cat /var/lib/mysql/.script.sql | mysql -uroot
 
-- hosts: redis,rabbitmq
+- hosts: redis,rabbitmq,tarantool
   become: true
   tasks:
   - name: install epel-release
@@ -79,3 +71,13 @@
     yum: state=latest name=rabbitmq-server
   - name: start rabbitmq-server
     systemd: service=rabbitmq-server enabled=yes state=restarted
+
+- hosts: tarantool
+  vars_files:
+    - vars.yml
+  become: true
+  tasks:
+  - name: copy tarantool repo
+    copy: src="tarantool.repo" dest="/etc/yum.repos.d/tarantool_1_10.repo"
+  - name: install tarantool
+    yum: state=latest name=tarantool

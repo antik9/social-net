@@ -1,4 +1,5 @@
 [mysqld]
-server-id = {{ ID }}
-enforce_gtid_consistency=ON
-gtid_mode=ON
+server-id={{ ID }}
+enforce-gtid-consistency=ON
+log-slave-updates=ON
+gtid-mode=ON

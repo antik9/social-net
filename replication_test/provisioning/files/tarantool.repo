@@ -1,0 +1,14 @@
+[tarantool_1_10]
+name=EnterpriseLinux-7 - Tarantool
+baseurl=http://download.tarantool.org/tarantool/1.10/el/7/x86_64/
+gpgkey=http://download.tarantool.org/tarantool/1.10/gpgkey
+repo_gpgcheck=1
+gpgcheck=0
+enabled=1
+
+[tarantool_1_10-source]
+name=EnterpriseLinux-7 - Tarantool Sources
+baseurl=http://download.tarantool.org/tarantool/1.10/el/7/SRPMS
+gpgkey=http://download.tarantool.org/tarantool/1.10/gpgkey
+repo_gpgcheck=1
+gpgcheck=0

@@ -27,6 +27,7 @@ extends base
         form[method="post"][action="/subscribe/" + User.Id]
           button[type="submit"] Subscribe
     div[style="float:left; width:50%;"]
+      a[href="/feed/" + User.Id] All posts
       each $message in FeedMessages
         p[style="color: gray"] #{$message.Timestamp}
         p #{$message.Message}

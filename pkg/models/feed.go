@@ -3,7 +3,10 @@ package models
 import (
 	"strconv"
 
+	"github.com/tarantool/go-tarantool"
+
 	"github.com/antik9/social-net/internal/db"
+	tnt "github.com/antik9/social-net/internal/tarantool"
 )
 
 type FeedMessage struct {
@@ -51,12 +54,30 @@ func SaveUserFeedMessageLink(userId, messageId int) {
 
 func (u *User) ListOwnFeedLimitBy(limit int) []FeedMessage {
 	var messages []FeedMessage
-	db.Db.Select(
-		&messages,
-		`SELECT author_id, ? AS author_name, timestamp, message FROM feed_message
-		WHERE author_id = ? ORDER BY id DESC LIMIT ?`,
-		u.FirstName, u.Id, limit,
+
+	/*
+		replicaDb := db.GetRandomReplica()
+		replicaDb.Select(
+			&messages,
+			`SELECT author_id, ? AS author_name, timestamp, message FROM feed_message
+		 	WHERE author_id = ? ORDER BY id DESC LIMIT ?`,
+			u.FirstName, u.Id, limit,
+		)
+	*/
+	resp, _ := tnt.Client.Select(
+		"feed_message",
+		"secondary", 0, uint32(limit), tarantool.IterEq,
+		[]interface{}{uint(u.Id)},
 	)
+	for _, tuple := range resp.Tuples() {
+		messages = append(messages, FeedMessage{
+			AuthorId:   u.Id,
+			AuthorName: u.FirstName,
+			Timestamp:  tuple[2].(string),
+			Message:    tuple[3].(string),
+		})
+	}
+
 	return messages
 }
 

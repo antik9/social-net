@@ -19,24 +19,26 @@ function load_url_paths_from_file(file)
 end
 
 -- Load URL paths from file
-paths = load_url_paths_from_file("mixed.txt")
+-- paths = load_url_paths_from_file("messages.txt")
 
-print("multiplepaths: Found " .. #paths .. " paths")
+-- print("multiplepaths: Found " .. #paths .. " paths")
 
 -- Initialize the paths array iterator
-counter = 0
+counter = 1
 
 request = function()
   -- Get the next paths array element
-  url_path = paths[counter]
+  -- url_path = paths[counter]
+  url_path = "http://localhost:8080/chat/"
 
   counter = counter + 1
 
   -- If the counter is longer than the paths array length then reset it
-  if counter > #paths then
-    counter = 0
+  -- if counter > #paths then
+  if counter > 20000 then
+    counter = 1
   end
 
   -- Return the request object with the current URL path
-  return wrk.format(nil, url_path)
+  return wrk.format(nil, url_path .. tostring(counter))
 end

@@ -32,7 +32,13 @@ type Config struct {
 		Password string `yaml:"password"`
 		Host     string `yaml:"host"`
 		Port     string `yaml:"port"`
-	}
+	} `yaml:"rabbit"`
+
+	Tarantool struct {
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+		Host     string `yaml:"host"`
+	} `yaml:"tarantool"`
 
 	Server struct {
 		Host string `yaml:"host"`

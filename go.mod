@@ -10,6 +10,10 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
+	github.com/tarantool/go-tarantool v0.0.0-20191110153431-821fb5b59550
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
+	golang.org/x/net v0.0.0-20191126235420-ef20fe5d7933 // indirect
+	google.golang.org/appengine v1.6.5 // indirect
+	gopkg.in/vmihailenco/msgpack.v2 v2.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20191010095647-fc94e3f71652
 )
