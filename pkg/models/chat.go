@@ -27,6 +27,10 @@ func GetMessagesForUsers(user, other *User) []Message {
 		`SELECT sender_id, timestamp, message FROM message
 		WHERE user1_id = ? AND user2_id = ? ORDER BY timestamp`, user1Id, user2Id,
 	)
+
+	if len(messages) > 10 {
+		return messages[len(messages)-10:]
+	}
 	return messages
 }
 

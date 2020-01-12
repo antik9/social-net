@@ -1,19 +1,23 @@
 extends base
   block content
     $userId = User.Id
+    $otherId = Other.Id
     $friendName = Other.FirstName
+    $userName = User.FirstName
     h3 Chat with #{$friendName}
-    div
+    div[id="log"]
       each $message in Messages
         if $userId == $message.SenderId
           div #{$message.Timestamp}
-          div You: #{$message.Message}
+          div #{$userName}: #{$message.Message}
         else
           div #{$message.Timestamp}
           div #{$friendName}: #{$message.Message}
         br
     br
-    form[method="post"]
-      input[name="message"]
+    form[method="post"][id="form"]
+      input[name="message"][id="msg"]
       button[type="submit"] Send
-
+    script[type="module"]
+      import connectToWebSocketServer from "/static/js/ws.js";
+      document.onload=connectToWebSocketServer(document.location.host, #{$userId}, #{$otherId});

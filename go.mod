@@ -8,6 +8,7 @@ require (
 	github.com/go-redis/redis v6.15.6+incompatible
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gorilla/mux v1.7.3
+	github.com/gorilla/websocket v1.4.1
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
 	github.com/tarantool/go-tarantool v0.0.0-20191110153431-821fb5b59550

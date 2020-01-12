@@ -18,6 +18,7 @@ import (
 	"github.com/antik9/social-net/internal/config"
 	"github.com/antik9/social-net/internal/errors"
 	"github.com/antik9/social-net/internal/queue"
+	"github.com/antik9/social-net/internal/ws"
 	"github.com/antik9/social-net/pkg/models"
 )
 
@@ -292,6 +293,8 @@ func searchUserPage(w http.ResponseWriter, r *http.Request) {
 
 func ServeForever() {
 	router := mux.NewRouter()
+	hubs := ws.NewHubs()
+
 	router.HandleFunc("/login", authenticateUser)
 	router.HandleFunc("/logout", logoutUser)
 	router.HandleFunc("/mypage", selfUserPage)
@@ -306,6 +309,9 @@ func ServeForever() {
 	router.HandleFunc("/feed/{id}", feedUserMessages)
 	router.HandleFunc("/subscribe/{id}", subscribeTo)
 	router.HandleFunc("/user/{id}", otherUserPage)
+	router.HandleFunc("/ws/chat", func(w http.ResponseWriter, r *http.Request) {
+		ws.ServeWs(hubs, w, r)
+	})
 	router.HandleFunc("/", indexPage)
 
 	log.Fatal(http.ListenAndServe(

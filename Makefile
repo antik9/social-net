@@ -1,12 +1,11 @@
 .PHONY: all
 
-all: migrate server
+commands = migrate server queue
 
-migrate:
-	go build -o sn-migrate cmd/migrate/main.go
+all: $(commands)
 
-server:
-	go build -o sn-server cmd/server/main.go
+$(commands): %: cmd/%/main.go
+	go build -o sn-$@ $<
 
-queue:
-	go build -o sn-queue cmd/queue/main.go
+clean:
+	@rm -f deposit-*

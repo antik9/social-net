@@ -6,11 +6,11 @@ database:
     password: "HfP4aCk7rqm;m]z)"
     extra: "charset=utf8&collation=utf8_general_ci"
     replicas:
-        - "localhost:2202"
+        # - "localhost:2202"
         # - "localhost:2205"
     chat_shards:
-        - "localhost:2208"
-        - "localhost:2211"
+        - "localhost:2201"
+        - "localhost:2204"
 
 redis:
     address: "localhost:6379"
@@ -29,4 +29,4 @@ tarantool:
 
 server:
     host: 0.0.0.0
-    port: 8080
+    port: 8081
