@@ -5,9 +5,9 @@ import (
 )
 
 type Message struct {
-	SenderId  int    `db:"sender_id"`
-	Timestamp string `db:"timestamp"`
-	Message   string `db:"message"`
+	SenderId  int    `db:"sender_id" json:"sender_id"`
+	Timestamp string `db:"timestamp" json:"timestamp"`
+	Message   string `db:"message" json:"message"`
 }
 
 func orderUsers(user, other *User) (user1Id, user2Id int) {

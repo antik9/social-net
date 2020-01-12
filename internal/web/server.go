@@ -2,9 +2,11 @@ package web
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -27,8 +29,9 @@ type ListOfUsers struct {
 }
 
 type ListOfMessages struct {
-	Messages    []models.Message
-	User, Other *models.User
+	Messages []models.Message `json:"messages"`
+	User     *models.User     `json:"user"`
+	Other    *models.User     `json:"other"`
 }
 
 type UserFeed struct {
@@ -204,30 +207,94 @@ func getUserById(vars map[string]string) *models.User {
 
 func chatWith(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	req, err := http.NewRequest(
+		http.MethodGet, fmt.Sprintf(
+			"http://%s:%s/chat/%s",
+			config.Conf.ChatServer.Host, config.Conf.ChatServer.Port, vars["id"],
+		), nil,
+	)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	sessCookie, _ := r.Cookie("sn-session")
+	req.AddCookie(sessCookie)
+
+	client := http.Client{Timeout: time.Second}
+	response, err := client.Do(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	switch response.StatusCode {
+	case http.StatusOK:
+		var listOfMessages ListOfMessages
+		data, _ := ioutil.ReadAll(response.Body)
+		_ = json.Unmarshal(data, &listOfMessages)
+		renderTemplate(
+			"internal/web/templates/messages.amber",
+			listOfMessages,
+			w,
+		)
+	case http.StatusInternalServerError:
+		http.Error(w, "cannot get messages from the server", http.StatusInternalServerError)
+	case http.StatusForbidden:
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func chatMessages(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
 	if user := getUserBySession(r); user != nil {
 		if other := getUserById(vars); other != nil {
-			switch r.Method {
-			case http.MethodGet:
-				messages := models.GetMessagesForUsers(user, other)
-				renderTemplate(
-					"internal/web/templates/messages.amber",
-					ListOfMessages{Messages: messages, User: user, Other: other},
-					w,
-				)
-			case http.MethodPost:
-				if err := r.ParseForm(); err == nil {
-					if message := r.FormValue("message"); message != "" {
-						models.SaveMessage(message, user, other)
-					}
-				}
-				http.Redirect(w, r, "/chat/"+vars["id"], http.StatusFound)
+			messages := models.GetMessagesForUsers(user, other)
+			listOfMessages := ListOfMessages{Messages: messages, User: user, Other: other}
+			marshalled, err := json.Marshal(listOfMessages)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
+			w.Write(marshalled)
 			return
 		}
 		http.NotFound(w, r)
 		return
 	}
-	http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+	http.Error(w, "session does not exist", http.StatusForbidden)
+}
+
+func saveChatMessage(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	requestData := struct {
+		Message  string `json:"message"`
+		UserId   int    `json:"userId"`
+		FriendId int    `json:"friendId"`
+	}{}
+	data, _ := ioutil.ReadAll(r.Body)
+
+	err = json.Unmarshal(data, &requestData)
+	if err != nil {
+		http.Error(w, "inproper data", http.StatusBadRequest)
+		return
+	}
+
+	if requestData.Message != "" && requestData.UserId != 0 && requestData.FriendId != 0 {
+		user := models.GetUserById(requestData.UserId)
+		friend := models.GetUserById(requestData.FriendId)
+		if user == nil || friend == nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		models.SaveMessage(requestData.Message, user, friend)
+	}
+	http.Error(w, "empty data", http.StatusBadRequest)
 }
 
 func saveFeedMessage(w http.ResponseWriter, r *http.Request) {
@@ -318,6 +385,19 @@ func ServeForever() {
 		fmt.Sprintf(
 			"%s:%s",
 			config.Conf.Server.Host, config.Conf.Server.Port,
+		), router,
+	))
+}
+
+func ServeChatForever() {
+	router := mux.NewRouter()
+	router.HandleFunc("/chat/message", saveChatMessage)
+	router.HandleFunc("/chat/{id}", chatMessages)
+
+	log.Fatal(http.ListenAndServe(
+		fmt.Sprintf(
+			"%s:%s",
+			config.Conf.ChatServer.Host, config.Conf.ChatServer.Port,
 		), router,
 	))
 }

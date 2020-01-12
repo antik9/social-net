@@ -12,15 +12,15 @@ import (
 )
 
 type User struct {
-	City         *City
-	CityId       int    `db:"city_id"`
-	Id           int    `db:"id"`
-	FirstName    string `db:"first_name"`
-	LastName     string `db:"last_name"`
-	Email        string `db:"email"`
-	Age          int    `db:"age"`
-	PasswordHash string `db:"password"`
-	Interests    []Interest
+	City         *City      `json:"-"`
+	CityId       int        `db:"city_id" json:"city_id"`
+	Id           int        `db:"id" json:"id"`
+	FirstName    string     `db:"first_name" json:"first_name"`
+	LastName     string     `db:"last_name" json:"last_name"`
+	Email        string     `db:"email" json:"email"`
+	Age          int        `db:"age" json:"age"`
+	PasswordHash string     `db:"password" json:"-"`
+	Interests    []Interest `json:"-"`
 }
 
 type Interest struct {

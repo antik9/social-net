@@ -1,6 +1,6 @@
 .PHONY: all
 
-commands = migrate server queue
+commands = migrate server queue chat
 
 all: $(commands)
 

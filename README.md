@@ -13,5 +13,6 @@ $ cd social-net
 $ make
 $ ./sn-migrate  # Migrate database schemas
 $ ./sn-server   # Start server
+$ ./sn-chat     # Start chat microservice
 $ ./sn-queeu    # Start queue for feed
 ```

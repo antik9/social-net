@@ -2,6 +2,7 @@ package ws
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
+	"github.com/antik9/social-net/internal/config"
 	"github.com/antik9/social-net/pkg/models"
 )
 
@@ -61,7 +63,7 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		models.SaveMessage(string(message), c.user, c.friend)
+		go saveMessage(string(message), c.user.Id, c.friend.Id)
 		c.hub.broadcast <- formatMessage(string(message), c.user.FirstName)
 	}
 }
@@ -156,4 +158,17 @@ func getUserFromRequest(r *http.Request, userKey string) *models.User {
 	userId := r.URL.Query().Get(userKey)
 	id, _ := strconv.Atoi(userId)
 	return models.GetUserById(id)
+}
+
+func saveMessage(message string, userId, friendId int) {
+	data, _ := json.Marshal(map[string]interface{}{
+		"message":  message,
+		"userId":   userId,
+		"friendId": friendId,
+	})
+
+	http.Post(fmt.Sprintf(
+		"http://%s:%s/chat/message",
+		config.Conf.ChatServer.Host, config.Conf.ChatServer.Port,
+	), "application/json", bytes.NewBuffer(data))
 }
